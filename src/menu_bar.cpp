@@ -2,147 +2,87 @@
 #include "imgui.h"
 #include "RoLocalization.h"
 #include "window_manager.h"
+#include <functional> // For std::function
+
+namespace {
+// Helper lambda to create a menu item and open a window
+auto menuItemAction = [](const char* labelKey, const char* windowId) {
+    if (ImGui::MenuItem(_(labelKey))) {
+        WindowFactory::AddWindow(windowId);
+    }
+};
+
+// Helper lambda for a simple menu with a single action
+auto simpleMenuItemAction = [](const char* labelKey, const char* windowId) {
+    if (ImGui::MenuItem(_(labelKey))) {
+        WindowFactory::AddWindow(windowId);
+    }
+};
+
+// Helper function for a submenu with multiple actions
+void submenu(const char* labelKey, std::function<void()> contentCallback) {
+    if (ImGui::BeginMenu(_(labelKey))) {
+        contentCallback();
+        ImGui::EndMenu();
+    }
+}
+
+// Helper function for a submenu with simple menu item actions
+void submenuItems(const char* labelKey, std::initializer_list<std::pair<const char*, const char*>> items) {
+    submenu(labelKey, [&]() {
+        for (const auto& item : items) {
+            menuItemAction(item.first, item.second);
+        }
+    });
+}
+
+// Helper function for a submenu with simple menu item actions and a separator
+void submenuItemsWithSeparator(const char* labelKey, std::initializer_list<std::pair<const char*, const char*>> items, const char* separatorTextKey) {
+    submenu(labelKey, [&]() {
+        for (const auto& item : items) {
+            menuItemAction(item.first, item.second);
+        }
+        ImGui::SeparatorText(_(separatorTextKey));
+        // Add any additional "Options" menu items here if needed
+    });
+}
+
+} // namespace
 
 void RoMenuBar::Render() {
-  if (!ImGui::BeginMainMenuBar()) {
-    return;
-  }
-  // New
-  if (ImGui::BeginMenu(_("New"))) {
-    Customer();
-    Repair();
-    Device();
-    DeviceFromCustom();
-    Parts();
-    StockReceived();
-    SupplierRecord();
-    ImGui::EndMenu();
-  }
-  // Views
-  if (ImGui::BeginMenu(_("Views"))) {
-    CustomersView();
-    RepairsView();
-    DevicesView();
-    InventoryView();
+    if (!ImGui::BeginMainMenuBar()) {
+        return;
+    }
+
+    submenu(_("New"), [&]() {
+        submenuItemsWithSeparator(_("Customer"), {{"New Customer", "customer"}}, "Options");
+        submenuItemsWithSeparator(_("Repair"), {{"New Repair", "repair"}}, "Options");
+        simpleMenuItemAction("Device", "device");
+        simpleMenuItemAction("Device from Custom Devices", "custom_device");
+        submenuItemsWithSeparator(_("Items"), {{"New Item", "parts"}}, "Options");
+        submenuItemsWithSeparator(_("Stock Received"), {{"From Purchase Invoice", "purchase_invoice"}, {"Internal arrival", "internal_arrival"}}, "Options");
+        simpleMenuItemAction("Supplier", "supplier");
+    });
+
+    submenuItems("Views", {
+        {"Customers", "customers_view"},
+        {"Repairs", "repairs_view"},
+        {"Devices", "devices_view"},
+        {"Items", "parts_view"},
+    });
+
     AttributesView();
-    ImGui::EndMenu();
-  }
-  ImGui::EndMainMenuBar();
+
+    ImGui::EndMainMenuBar();
 }
 
 void RoMenuBar::AttributesView() {
-  if (ImGui::BeginMenu(_("Attributes"))) {
-    if (ImGui::MenuItem(_("Repair Categories"))) {
-      WindowFactory::AddWindow("categories");
-    }
-    if (ImGui::MenuItem(_("Brands"))) {
-      WindowFactory::AddWindow("brands");
-    }
-    if (ImGui::MenuItem(_("Device Types"))) {
-      WindowFactory::AddWindow("device_types");
-    }
-    if (ImGui::MenuItem(_("Repair States"))) {
-      WindowFactory::AddWindow("repair_states");
-    }
-    if (ImGui::MenuItem(_("Qualities"))) {
-      WindowFactory::AddWindow("qualities");
-    }
-    if (ImGui::MenuItem(_("Payment Methods"))) {
-      WindowFactory::AddWindow("payment_methods");
-    }
-    ImGui::EndMenu();
-  }
-}
-
-void RoMenuBar::DeviceFromCustom() {
-  if (ImGui::MenuItem(_("Device from Custom Devices"))) {
-    WindowFactory::AddWindow("custom_device");
-  }
-}
-
-void RoMenuBar::Customer() {
-  if (ImGui::BeginMenu(_("Customer"))) {
-    if (ImGui::MenuItem(_("New Customer"))) {
-      WindowFactory::AddWindow("customer");
-    }
-    ImGui::SeparatorText(_("Options"));
-    if (ImGui::MenuItem(_("Edit Customer"))) {
-    }
-    ImGui::EndMenu();
-  }
-}
-
-void RoMenuBar::Device() {
-  if (ImGui::MenuItem(_("Device"))) {
-    WindowFactory::AddWindow("device");
-  }
-}
-
-void RoMenuBar::Repair() {
-  if (ImGui::BeginMenu(_("Repair"))) {
-    if (ImGui::MenuItem(_("New Repair"))) {
-      WindowFactory::AddWindow("repair");
-    }
-    ImGui::SeparatorText(_("Options"));
-    if (ImGui::MenuItem(_("Always open"))) {
-    }
-    ImGui::EndMenu();
-  }
-}
-
-void RoMenuBar::Parts() {
-  if (ImGui::BeginMenu(_("Items"))) {
-    if (ImGui::MenuItem(_("New Item"))) {
-      WindowFactory::AddWindow("parts");
-    }
-    ImGui::SeparatorText(_("Options"));
-    if (ImGui::MenuItem(_("Always open"))) {
-    }
-    ImGui::EndMenu();
-  }
-}
-
-void RoMenuBar::StockReceived() {
-  if (ImGui::BeginMenu(_("Stock Received"))) {
-    if (ImGui::MenuItem(_("From Purchase Invoice"))) {
-      WindowFactory::AddWindow("purchase_invoice");
-    }
-    if (ImGui::MenuItem(_("Internal arrival"))) {
-      WindowFactory::AddWindow("internal_arrival");
-    }
-    ImGui::SeparatorText(_("Options"));
-    if (ImGui::MenuItem(_("Always open"))) {
-    }
-    ImGui::EndMenu();
-  }
-}
-
-void RoMenuBar::SupplierRecord() {
-  if (ImGui::MenuItem(_("Supplier"))) {
-    WindowFactory::AddWindow("supplier");
-  }
-}
-
-void RoMenuBar::CustomersView() {
-  if (ImGui::MenuItem(_("Customers"))) {
-    WindowFactory::AddWindow("customers_view");
-  }
-}
-
-void RoMenuBar::RepairsView() {
-  if (ImGui::MenuItem(_("Repairs"))) {
-    WindowFactory::AddWindow("repairs_view");
-  }
-}
-
-void RoMenuBar::DevicesView() {
-  if (ImGui::MenuItem(_("Devices"))) {
-    WindowFactory::AddWindow("devices_view");
-  }
-}
-
-void RoMenuBar::InventoryView() {
-  if (ImGui::MenuItem(_("Items"))) {
-    WindowFactory::AddWindow("parts_view");
-  }
+    submenu("Attributes", [&]() {
+        menuItemAction("Repair Categories", "categories");
+        menuItemAction("Brands", "brands");
+        menuItemAction("Device Types", "device_types");
+        menuItemAction("Repair States", "repair_states");
+        menuItemAction("Qualities", "qualities");
+        menuItemAction("Payment Methods", "payment_methods");
+    });
 }
