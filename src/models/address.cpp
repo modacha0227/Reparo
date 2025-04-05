@@ -1,69 +1,64 @@
 #include "address.h"
 #include "../../src/text_fields.h"
+#include <string>
+#include <vector>
+#include <algorithm> // For std::equal
 
-Address::Data::Data(const Address& address) : data(address) { }
+class Address::Data {
+public:
+    Data(const Address& address) : data_(address) {}
 
-const int& Address::Data::ID() const {
-  return data.id;
-}
+    const int& ID() const {
+        return data_.id;
+    }
 
-const std::vector<std::string> Address::Data::Lines() const {
-  return data.address;
-}
+    const std::vector<std::string>& Lines() const {
+        return data_.address;
+    }
 
-Address& Address::SetID(int& _id) {
-  id = _id;
-  return *this;
+private:
+    Address data_;
+};
+
+Address& Address::SetID(int id_) {
+    id = id_;
+    return *this;
 }
 
 Address& Address::SetLines(std::vector<TextField>& _address) {
-  for (auto& field : _address) {
-    address.push_back(field.Get());
-  }
-  return *this;
+    address.clear();
+    for (const auto& field : _address) {
+        address.push_back(field.Get());
+    }
+    return *this;
 }
 
 Address& Address::SetLines(std::vector<std::string>& _address) {
-  address.clear();
-  for (auto& field : _address) {
-    address.push_back(field);
-  }
-  return *this;
+    address = _address; // More efficient to assign directly
+    return *this;
 }
 
-bool Address::Equals(const Address& _other, bool _skip_id) const {
-  if (!_skip_id && id != _other.id) {
-    return false;
-  }
-  for (int i = 0; i < address.size(); ++i) {
-    if (address[i] != _other.address[i]) {
-      return false;
+bool Address::Equals(const Address& _other, bool skip_id) const {
+    if (!skip_id && id != _other.id) {
+        return false;
     }
-  }
-  return true;
+    return address == _other.address; // Use direct vector comparison
 }
 
-std::string Address::ToString(const std::string _delimiter, const std::string align) const {
-  std::string _str;
-  bool first = true;
-  for (size_t i = 0; i < address.size(); ++i) {
-    const auto& line = address[i];
-    if (line.empty()) { continue; }
-    if (align == "right") {
-      if (!first) {
-        _str += _delimiter;
-      }
-      _str += line;
+std::string Address::ToString(const std::string& delimiter, const std::string& align) const {
+    std::string str;
+    for (size_t i = 0; i < address.size(); ++i) {
+        if (!address[i].empty()) {
+            str += address[i];
+            if (i < address.size() - 1) {
+                str += delimiter;
+            }
+        }
     }
-    else {
-      _str += _delimiter + line;
-    }
-    first = false;
-  }
-  return _str;
+    return str;
 }
 
 void Address::Clear() {
-  id = -1;
-  address.clear();
+    id = -1;
+    address.clear();
 }
