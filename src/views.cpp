@@ -12,6 +12,7 @@ CustomerView::CustomerView()
       {"phone", "Phone"},
       {"name", "Name"},
       {"surname", "Surname"},
+      {"gender", "Gender"}, 
       {"email", "Email"}
     }
   ) 
